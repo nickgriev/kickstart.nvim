@@ -155,7 +155,7 @@ vim.opt.inccommand = 'split'
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 10
+vim.opt.scrolloff = 8
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -215,6 +215,29 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   end
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
+
+-- [[ Configure shell to Powershell ]]
+
+-- Check if 'pwsh' is executable and set the shell accordingly
+if vim.fn.executable 'pwsh' == 1 then
+  vim.o.shell = 'pwsh -nologo'
+else
+  vim.o.shell = 'powershell -nologo'
+end
+
+-- Setting shell command flags
+vim.o.shellcmdflag =
+  "-NoLogo -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();$PSDefaultParameterValues['Out-File:Encoding']='utf8';"
+
+-- Setting shell redirection
+vim.o.shellredir = '2>&1 | %{ "$_" } | Out-File %s; exit $LastExitCode'
+
+-- Setting shell pipe
+vim.o.shellpipe = '2>&1 | %{ "$_" } | Tee-Object %s; exit $LastExitCode'
+
+-- Setting shell quote options
+vim.o.shellquote = ''
+vim.o.shellxquote = ''
 
 -- [[ Configure and install plugins ]]
 --
@@ -957,6 +980,35 @@ require('lazy').setup({
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
   -- { import = 'custom.plugins' },
+  {
+    'akinsho/toggleterm.nvim',
+    version = '*',
+    opts = {
+      open_mapping = [[<c-\>]],
+      direction = 'horizontal',
+      float_opts = {
+        -- The border key is *almost* the same as 'nvim_open_win'
+        -- see :h nvim_open_win for details on borders however
+        -- the 'curved' border is a custom border type
+        -- not natively supported but implemented in this plugin.
+        border = 'curved',
+        -- like `size`, width, height, row, and col can be a number or function which is passed the current terminal
+        -- width = <value>,
+        -- height = <value>,
+        -- row = <value>,
+        -- col = <value>,
+        -- winblend = 3,
+        -- zindex = <value>,
+        title_pos = 'left', -- position of the title of the floating window
+      },
+      winbar = {
+        enabled = false,
+        name_formatter = function(term) --  term: Terminal
+          return term.name
+        end,
+      },
+    },
+  },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
